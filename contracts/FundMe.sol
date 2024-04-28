@@ -9,16 +9,18 @@ import "./PriceConverter.sol";
 error FundMe__NotOwner();
 
 /**@title A sample Funding Contract
- * @author Patrick Collins
+ * @author Hameedah Orimadegun
  * @notice This contract is for creating a sample funding contract
  * @dev This implements price feeds as our library
  */
+//using s_variable name to indicate the variable is a storage variable to reduce the gas cost associated with accessing these variables.
+//using i_variabele name to indicate the variable is an immutable variable to reduce the gas cost associated with accessing these variables.
 contract FundMe {
     // Type Declarations
     using PriceConverter for uint256;
 
     // State variables
-    uint256 public constant MINIMUM_USD = 50 * 10**18;
+    uint256 public constant MINIMUM_USD = 50 * 10 ** 18;
     address private immutable i_owner;
     address[] private s_funders;
     mapping(address => uint256) private s_addressToAmountFunded;
@@ -32,16 +34,6 @@ contract FundMe {
         if (msg.sender != i_owner) revert FundMe__NotOwner();
         _;
     }
-
-    // Functions Order:
-    //// constructor
-    //// receive
-    //// fallback
-    //// external
-    //// public
-    //// internal
-    //// private
-    //// view / pure
 
     constructor(address priceFeed) {
         s_priceFeed = AggregatorV3Interface(priceFeed);
@@ -76,7 +68,8 @@ contract FundMe {
     }
 
     function cheaperWithdraw() public onlyOwner {
-        address[] memory funders = s_funders;
+        //reseting the withdraw function above to a cheaper withdraw function that doesn't cost a lot of gas
+        address[] memory funders = s_funders; //s_funders is now stored in a memory because memory is alot cheaper
         // mappings can't be in memory, sorry!
         for (
             uint256 funderIndex = 0;
@@ -96,17 +89,15 @@ contract FundMe {
      *  @param fundingAddress the address of the funder
      *  @return the amount funded
      */
-    function getAddressToAmountFunded(address fundingAddress)
-        public
-        view
-        returns (uint256)
-    {
+    function getAddressToAmountFunded(
+        address fundingAddress
+    ) public view returns (uint256) {
         return s_addressToAmountFunded[fundingAddress];
     }
 
-    function getVersion() public view returns (uint256) {
-        return s_priceFeed.version();
-    }
+    // function getVersion() public view returns (uint256) {
+    //     return s_priceFeed.version();
+    // }
 
     function getFunder(uint256 index) public view returns (address) {
         return s_funders[index];

@@ -8,7 +8,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
           let fundMe
           let mockV3Aggregator
           let deployer
-          const sendValue = ethers.utils.parseEther("1")
+          const sendValue = ethers.utils.parseEther("1") //equivalent to 1*10^8
           beforeEach(async () => {
               // const accounts = await ethers.getSigners()
               // deployer = accounts[0]
@@ -65,8 +65,8 @@ const { developmentChains } = require("../../helper-hardhat-config")
                   // Act
                   const transactionResponse = await fundMe.withdraw()
                   const transactionReceipt = await transactionResponse.wait()
-                  const { gasUsed, effectiveGasPrice } = transactionReceipt
-                  const gasCost = gasUsed.mul(effectiveGasPrice)
+                  const { gasUsed, effectiveGasPrice } = transactionReceipt // we are using the gasUsed and effectiveGasPrice to find the gasCost from transactionReceipt
+                  const gasCost = gasUsed.mul(effectiveGasPrice) //here we are saying gaCost = gasUsed + effectiveGasPrive
 
                   const endingFundMeBalance = await fundMe.provider.getBalance(
                       fundMe.address
@@ -92,7 +92,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
                   for (i = 1; i < 6; i++) {
                       const fundMeConnectedContract = await fundMe.connect(
                           accounts[i]
-                      )
+                      ) //all the different accounts from 1 to 6 acounts[i]
                       await fundMeConnectedContract.fund({ value: sendValue })
                   }
                   const startingFundMeBalance =
@@ -102,14 +102,15 @@ const { developmentChains } = require("../../helper-hardhat-config")
 
                   // Act
                   const transactionResponse = await fundMe.cheaperWithdraw()
+                  //   const transactionResponse = await fundMe.withdraw()
                   // Let's comapre gas costs :)
                   // const transactionResponse = await fundMe.withdraw()
                   const transactionReceipt = await transactionResponse.wait()
                   const { gasUsed, effectiveGasPrice } = transactionReceipt
                   const withdrawGasCost = gasUsed.mul(effectiveGasPrice)
-                  console.log(`GasCost: ${withdrawGasCost}`)
-                  console.log(`GasUsed: ${gasUsed}`)
-                  console.log(`GasPrice: ${effectiveGasPrice}`)
+                  //   console.log(`GasCost: ${withdrawGasCost}`)
+                  //   console.log(`GasUsed: ${gasUsed}`)
+                  //   console.log(`GasPrice: ${effectiveGasPrice}`)
                   const endingFundMeBalance = await fundMe.provider.getBalance(
                       fundMe.address
                   )
@@ -121,7 +122,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
                           .add(startingDeployerBalance)
                           .toString(),
                       endingDeployerBalance.add(withdrawGasCost).toString()
-                  )
+                  ) //(startingFundMeBalance + startingDeployerBalance).toString() is equal to (endingDeployerBalance.add(withdrawGasCost)).toString()
                   // Make a getter for storage variables
                   await expect(fundMe.getFunder(0)).to.be.reverted
 
@@ -136,12 +137,72 @@ const { developmentChains } = require("../../helper-hardhat-config")
               })
               it("Only allows the owner to withdraw", async function () {
                   const accounts = await ethers.getSigners()
-                  const fundMeConnectedContract = await fundMe.connect(
-                      accounts[1]
+                  const attacker = accounts[1] //attacker is an account object
+                  const attackerConnectedContract = await fundMe.connect(
+                      attacker //account of index 1 which is the second acount in fundme
                   )
                   await expect(
-                      fundMeConnectedContract.withdraw()
-                  ).to.be.revertedWith("FundMe__NotOwner")
+                      attackerConnectedContract.withdraw()
+                  ).to.be.revertedWith("FundMe__NotOwner") //here this means when some other account try to withdraw it should revert
               })
+
+              // it("Only allows the owner to withdraw", async function () {
+              //     const accounts = await ethers.getSigners()
+              //     const fundMeConnectedContract = await fundMe.connect(
+              //         accounts[1]
+              //     )
+              //     await expect(
+              //         fundMeConnectedContract.withdraw()
+              //     ).to.be.revertedWith("FundMe__NotOwner")
+              // })
+              //   it("is allows us to cheaper withdraw with multiple funders", async () => {
+              //       // Arrange
+              //       const accounts = await ethers.getSigners()
+              //       for (i = 1; i < 6; i++) {
+              //           const fundMeConnectedContract = await fundMe.connect(
+              //               accounts[i]
+              //           ) //all the different accounts from 1 to 6 acounts[i]
+              //           await fundMeConnectedContract.fund({ value: sendValue })
+              //       }
+              //       const startingFundMeBalance =
+              //           await fundMe.provider.getBalance(fundMe.address)
+              //       const startingDeployerBalance =
+              //           await fundMe.provider.getBalance(deployer)
+
+              //       // Act
+              //       const transactionResponse = await fundMe.cheaperWithdraw()
+              //       //   const transactionResonse = await fundMe.withdraw()
+              //       // Let's comapre gas costs :)
+              //       // const transactionResponse = await fundMe.withdraw()
+              //       const transactionReceipt = await transactionResponse.wait()
+              //       const { gasUsed, effectiveGasPrice } = transactionReceipt
+              //       const withdrawGasCost = gasUsed.mul(effectiveGasPrice)
+              //       //   console.log(`GasCost: ${withdrawGasCost}`)
+              //       //   console.log(`GasUsed: ${gasUsed}`)
+              //       //   console.log(`GasPrice: ${effectiveGasPrice}`)
+              //       const endingFundMeBalance = await fundMe.provider.getBalance(
+              //           fundMe.address
+              //       )
+              //       const endingDeployerBalance =
+              //           await fundMe.provider.getBalance(deployer)
+              //       // Assert
+              //       assert.equal(
+              //           startingFundMeBalance
+              //               .add(startingDeployerBalance)
+              //               .toString(),
+              //           endingDeployerBalance.add(withdrawGasCost).toString()
+              //       ) //(startingFundMeBalance + startingDeployerBalance).toString() is equal to (endingDeployerBalance.add(withdrawGasCost)).toString()
+              //       // Make a getter for storage variables
+              //       await expect(fundMe.getFunder(0)).to.be.reverted
+
+              //       for (i = 1; i < 6; i++) {
+              //           assert.equal(
+              //               await fundMe.getAddressToAmountFunded(
+              //                   accounts[i].address
+              //               ),
+              //               0
+              //           )
+              //       }
+              //   })
           })
       })
